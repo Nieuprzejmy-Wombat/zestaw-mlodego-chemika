@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://7hljs16xx4oy"]
+
+[ext_resource type="PackedScene" uid="uid://db2sg07hinldk" path="res://potion_map_camera.tscn" id="1_8soty"]
+
+[node name="Map" type="Node3D"]
+
+[node name="Cam" parent="." instance=ExtResource("1_8soty")]

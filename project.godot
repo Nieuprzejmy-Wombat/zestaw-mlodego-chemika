@@ -11,5 +11,22 @@ config_version=5
 [application]
 
 config/name="zestaw-młodego-chemika"
+config/name_localized={
+"en": "young alchemist's set",
+"pl": "zestaw młodego alchemika"
+}
+run/main_scene="res://main_menu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/mode=2
+window/size/initial_position_type=4
+window/size/borderless=true
+
+[internationalization]
+
+locale/locale_filter_mode=1
+locale/country_filter=[]
+locale/language_filter=["en", "pl"]
