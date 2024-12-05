@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://dx3hdursrvngl"]
+
+[ext_resource type="Script" path="res://wormhole.gd" id="1_4ul18"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_7nxnn"]
+radius = 1.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_l6axb"]
+radius = 1.0
+height = 2.0
+
+[node name="Wormhole" type="Area3D"]
+monitorable = false
+priority = 1
+script = ExtResource("1_4ul18")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_7nxnn")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_l6axb")

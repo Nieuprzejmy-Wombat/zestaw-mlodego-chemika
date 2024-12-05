@@ -1,3 +1,16 @@
-[gd_scene format=3 uid="uid://db2sg07hinldk"]
+[gd_scene load_steps=3 format=3 uid="uid://db2sg07hinldk"]
 
-[node name="Cam" type="Node3D"]
+[ext_resource type="Script" path="res://potion_map_camera.gd" id="1_jn5em"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_henyv"]
+
+[node name="Cam" type="CharacterBody3D"]
+script = ExtResource("1_jn5em")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+rotation_edit_mode = 1
+current = true
+far = 500.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_henyv")

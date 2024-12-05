@@ -1,7 +1,36 @@
-[gd_scene load_steps=2 format=3 uid="uid://7hljs16xx4oy"]
+[gd_scene load_steps=5 format=3 uid="uid://7hljs16xx4oy"]
 
 [ext_resource type="PackedScene" uid="uid://db2sg07hinldk" path="res://potion_map_camera.tscn" id="1_8soty"]
+[ext_resource type="PackedScene" uid="uid://dx3hdursrvngl" path="res://wormhole.tscn" id="2_g4h7w"]
+
+[sub_resource type="Environment" id="Environment_msfof"]
+background_mode = 1
+background_color = Color(0, 0.4, 0.341176, 1)
+tonemap_mode = 2
+ssao_enabled = true
+sdfgi_enabled = true
+glow_enabled = true
+fog_light_color = Color(0.607036, 0.516826, 0.602791, 1)
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.0
+
+[sub_resource type="FogMaterial" id="FogMaterial_abx21"]
 
 [node name="Map" type="Node3D"]
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_msfof")
+
+[node name="FogVolume" type="FogVolume" parent="."]
+shape = 4
+material = SubResource("FogMaterial_abx21")
+
 [node name="Cam" parent="." instance=ExtResource("1_8soty")]
+
+[node name="Wormhole" parent="." instance=ExtResource("2_g4h7w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1291, 0, 2.03633)
+other = NodePath("../Wormhole2")
+
+[node name="Wormhole2" parent="." instance=ExtResource("2_g4h7w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.56952, -1.19209e-07, -3.34297)
+other = NodePath("../Wormhole")
