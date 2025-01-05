@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://ckscfy46iv443"]
+[gd_scene load_steps=5 format=3 uid="uid://ckscfy46iv443"]
 
 [ext_resource type="Script" path="res://main_menu.gd" id="1_ehrw2"]
+[ext_resource type="PackedScene" uid="uid://cuvvogj37sjty" path="res://settings_menu.tscn" id="2_g1t5j"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_eleed"]
 font_size = 64
@@ -61,4 +62,10 @@ theme = SubResource("Theme_8hy8m")
 text = "Exit"
 language = "en"
 
+[node name="SettingsMenu" parent="." instance=ExtResource("2_g1t5j")]
+visible = false
+layout_mode = 1
+
+[connection signal="pressed" from="VBoxContainer/ButtonPlay" to="." method="_on_button_play_pressed"]
+[connection signal="pressed" from="VBoxContainer/ButtonSettings" to="." method="_on_button_settings_pressed"]
 [connection signal="pressed" from="VBoxContainer/ButtonExit" to="." method="_on_button_exit_pressed"]

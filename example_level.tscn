@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://bnraepxqkbtxt"]
+[gd_scene load_steps=7 format=3 uid="uid://bnraepxqkbtxt"]
 
+[ext_resource type="Script" path="res://example_level.gd" id="1_2ykp3"]
 [ext_resource type="PackedScene" uid="uid://c0v0wevtosl86" path="res://player.tscn" id="1_qnksc"]
+[ext_resource type="PackedScene" uid="uid://cuvvogj37sjty" path="res://settings_menu.tscn" id="3_vssgh"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_avcno"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -18,6 +20,7 @@ sdfgi_enabled = true
 glow_enabled = true
 
 [node name="Node3D" type="Node3D"]
+script = ExtResource("1_2ykp3")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1uwq7")
@@ -32,3 +35,8 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.93064, 0)
 use_collision = true
 size = Vector3(17.485, 0.245, 22.185)
+
+[node name="SettingsMenu" parent="." instance=ExtResource("3_vssgh")]
+visible = false
+
+[connection signal="hidden" from="SettingsMenu" to="." method="_on_settings_menu_hidden"]
