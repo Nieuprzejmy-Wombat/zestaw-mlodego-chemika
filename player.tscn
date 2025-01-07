@@ -5,6 +5,7 @@
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_512q2"]
 
 [node name="Player" type="CharacterBody3D"]
+rotation_edit_mode = 1
 script = ExtResource("1_5qpuk")
 
 [node name="Camera3D" type="Camera3D" parent="."]
