@@ -3,18 +3,12 @@ extends CharacterBody3D
 
 const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
-const LOOKAROUND_SPEED = 1
-
-var goal := quaternion
+const LOOKAROUND_SPEED = 0.1
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _physics_process(delta: float) -> void:
-	var interpolated_quat := quaternion.slerp(goal, delta * LOOKAROUND_SPEED)
-	if interpolated_quat.angle_to(quaternion) > 0.00001:
-		quaternion = interpolated_quat
-	
 	# Add the gravity.
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -37,8 +31,8 @@ func _physics_process(delta: float) -> void:
 	
 
 func _input(event):
-	if event is InputEventMouseMotion and event.button_mask & 1:
-		goal = Quaternion(Vector3.MODEL_LEFT, event.relative.y) * Quaternion(Vector3.MODEL_BOTTOM, event.relative.x)
-		goal = goal.normalized()
-	else:
-		goal = quaternion # stop moving without input
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		var rot := Quaternion(
+			Vector3.FORWARD, Vector3(event.relative.x * LOOKAROUND_SPEED,-event.relative.y * LOOKAROUND_SPEED,-100 * LOOKAROUND_SPEED).normalized()
+			).normalized()
+		quaternion = (quaternion * rot).normalized()
