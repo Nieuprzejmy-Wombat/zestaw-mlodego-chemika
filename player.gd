@@ -17,9 +17,8 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
-	# TODO: replace UI actions with custom gameplay actions
-	var input_dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var input_dir := Input.get_vector("strafe_left", "strafe_right", "forwards", "backwards")
+	var direction = ($Camera3D.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	if direction:
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
@@ -28,11 +27,11 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0, SPEED)
 	
 	move_and_slide()
-	
 
 func _input(event):
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		var rot := Quaternion(
 			Vector3.FORWARD, Vector3(event.relative.x * LOOKAROUND_SPEED,-event.relative.y * LOOKAROUND_SPEED,-100 * LOOKAROUND_SPEED).normalized()
 			).normalized()
-		quaternion = (quaternion * rot).normalized()
+		$Camera3D.quaternion = ($Camera3D.quaternion * rot).normalized()
+		$Camera3D.rotation.z = 0
