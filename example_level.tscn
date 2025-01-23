@@ -75,7 +75,7 @@ glow_enabled = true
 [sub_resource type="Resource" id="Resource_tr6bp"]
 script = ExtResource("6_mu682")
 rough = true
-size = Vector3(0.1, 0.1, 0.1)
+size = Vector3(0.5, 0.5, 0.5)
 
 [sub_resource type="Resource" id="Resource_q1jf4"]
 script = ExtResource("5_4fc8q")

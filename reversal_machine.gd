@@ -3,7 +3,6 @@ extends Node3D
 const DIST := 1000 # TODO: fix: if 100 not spawning properly
 
 @onready var iterations := Time.get_ticks_msec()
-
 @onready var world: GameWorld = get_tree().current_scene
 
 func _process(_delta: float) -> void:

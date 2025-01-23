@@ -20,6 +20,7 @@ collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_k7xie")
 save = SubResource("Resource_hkl3w")
+volume = 0.14
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Inventory"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
