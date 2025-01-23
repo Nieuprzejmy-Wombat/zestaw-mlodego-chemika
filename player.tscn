@@ -6,11 +6,14 @@
 
 [node name="Player" type="CharacterBody3D"]
 rotation_edit_mode = 1
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+axis_lock_angular_z = true
 script = ExtResource("1_5qpuk")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37144, 0)
 current = true
+fov = 37.8493
 
 [node name="SpotLight3D" type="SpotLight3D" parent="Camera3D"]
 

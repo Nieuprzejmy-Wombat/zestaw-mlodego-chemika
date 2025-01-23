@@ -1,8 +1,61 @@
-[gd_scene load_steps=7 format=3 uid="uid://bnraepxqkbtxt"]
+[gd_scene load_steps=28 format=3 uid="uid://bnraepxqkbtxt"]
 
 [ext_resource type="Script" path="res://example_level.gd" id="1_2ykp3"]
 [ext_resource type="PackedScene" uid="uid://c0v0wevtosl86" path="res://player.tscn" id="1_qnksc"]
 [ext_resource type="PackedScene" uid="uid://cuvvogj37sjty" path="res://settings_menu.tscn" id="3_vssgh"]
+[ext_resource type="Script" path="res://material_property.gd" id="4_6h12v"]
+[ext_resource type="Script" path="res://item_save.gd" id="5_4fc8q"]
+[ext_resource type="PackedScene" uid="uid://c6exqer38dh0o" path="res://item.tscn" id="5_x3mo5"]
+[ext_resource type="Script" path="res://material_shape.gd" id="6_mu682"]
+[ext_resource type="PackedScene" uid="uid://ck7bjntffv1dt" path="res://reversal_machine.tscn" id="8_rw2yu"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_62usr"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_a4q4j"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_aokme"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_l8dik"]
+
+[sub_resource type="Curve" id="Curve_3squh"]
+
+[sub_resource type="Resource" id="Resource_yxle0"]
+script = ExtResource("4_6h12v")
+direction = Vector3(1, 0, 0)
+function_curve = SubResource("Curve_3squh")
+input_scale = 0.1
+offset = -0.5
+
+[sub_resource type="Curve" id="Curve_a7v0b"]
+_data = [Vector2(0.488608, 1), 0.0, 0.0, 0, 0, Vector2(0.516456, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Resource" id="Resource_bgut1"]
+script = ExtResource("4_6h12v")
+direction = Vector3(0, 1, 0)
+function_curve = SubResource("Curve_a7v0b")
+input_scale = 1.0
+offset = -0.5
+
+[sub_resource type="Curve" id="Curve_gqnml"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.440506, 1), 0.0, 0.0, 0, 0, Vector2(0.511392, 0.438894), -0.622575, -0.622575, 0, 0, Vector2(0.992405, 0.388458), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="Resource" id="Resource_fixl2"]
+script = ExtResource("4_6h12v")
+direction = Vector3(0, 0, 1)
+function_curve = SubResource("Curve_gqnml")
+input_scale = 0.1
+offset = -0.5
+
+[sub_resource type="Curve" id="Curve_tpkuf"]
+
+[sub_resource type="Resource" id="Resource_am8aj"]
+script = ExtResource("4_6h12v")
+direction = Vector3(0, 0, 0)
+function_curve = SubResource("Curve_tpkuf")
+input_scale = 0.0
+offset = -0.5
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_avcno"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -19,8 +72,43 @@ ssao_enabled = true
 sdfgi_enabled = true
 glow_enabled = true
 
-[node name="Node3D" type="Node3D"]
+[sub_resource type="Resource" id="Resource_tr6bp"]
+script = ExtResource("6_mu682")
+rough = true
+size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="Resource" id="Resource_q1jf4"]
+script = ExtResource("5_4fc8q")
+point = Vector3(2, 8, 5)
+shape = SubResource("Resource_tr6bp")
+position = Vector3(0, 0, 0)
+rotation = Quaternion(1, 0, 0, 0)
+
+[sub_resource type="Resource" id="Resource_qeop8"]
+script = ExtResource("6_mu682")
+rough = true
+size = Vector3(0.1, 0.5, 0.4)
+
+[sub_resource type="Resource" id="Resource_jsnqc"]
+script = ExtResource("5_4fc8q")
+point = Vector3(3, 2, 15)
+shape = SubResource("Resource_qeop8")
+position = Vector3(0, 0, 0)
+rotation = Quaternion(0, 1, 0, 0)
+
+[node name="GameWorld" type="Node3D"]
 script = ExtResource("1_2ykp3")
+rough_solid_shape = SubResource("SphereShape3D_62usr")
+rough_solid_mesh = SubResource("SphereMesh_a4q4j")
+solid_shape = SubResource("BoxShape3D_aokme")
+solid_mesh = SubResource("BoxMesh_l8dik")
+albedo_r = SubResource("Resource_yxle0")
+albedo_g = SubResource("Resource_bgut1")
+albedo_b = SubResource("Resource_fixl2")
+state = SubResource("Resource_am8aj")
+melting_point = 100000.0
+evaporation_point = 1e+06
+item_scene = ExtResource("5_x3mo5")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1uwq7")
@@ -29,14 +117,26 @@ environment = SubResource("Environment_1uwq7")
 transform = Transform3D(-0.91706, -0.309886, 0.250941, 0, 0.62932, 0.777146, -0.398749, 0.71269, -0.577125, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Player" parent="." instance=ExtResource("1_qnksc")]
-
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.93064, 0)
 use_collision = true
 size = Vector3(17.485, 0.245, 22.185)
 
+[node name="Player" parent="." instance=ExtResource("1_qnksc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55925, 0)
+
+[node name="Item" parent="." instance=ExtResource("5_x3mo5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.15161, 42.9664, 0)
+save = SubResource("Resource_q1jf4")
+
+[node name="Item2" parent="." instance=ExtResource("5_x3mo5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.15161, 49.2483, 0)
+save = SubResource("Resource_jsnqc")
+
 [node name="SettingsMenu" parent="." instance=ExtResource("3_vssgh")]
 visible = false
+
+[node name="ReversalMachine" parent="." instance=ExtResource("8_rw2yu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.17465, 0.950863, -0.033576)
 
 [connection signal="hidden" from="SettingsMenu" to="." method="_on_settings_menu_hidden"]

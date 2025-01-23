@@ -1,4 +1,4 @@
-extends Node3D
+extends GameWorld
 
 func reload_settings():
 	var file = FileAccess.open("user://.settings", FileAccess.READ)

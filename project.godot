@@ -25,6 +25,11 @@ window/size/mode=3
 window/size/initial_position_type=4
 window/size/borderless=true
 
+[global_group]
+
+Ground="Plants can be placed"
+Map=""
+
 [input]
 
 strafe_left={
@@ -51,9 +56,24 @@ backwards={
 , Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":1,"axis_value":1.0,"script":null)
 ]
 }
+hit={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":1,"position":Vector2(184, 28),"global_position":Vector2(193, 74),"factor":1.0,"button_index":1,"canceled":false,"pressed":true,"double_click":false,"script":null)
+]
+}
+place={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":2,"position":Vector2(300, 23),"global_position":Vector2(309, 69),"factor":1.0,"button_index":2,"canceled":false,"pressed":true,"double_click":false,"script":null)
+]
+}
 
 [internationalization]
 
 locale/locale_filter_mode=1
 locale/country_filter=[]
 locale/language_filter=["en", "pl"]
+
+[layer_names]
+
+3d_physics/layer_1="Normal"
+3d_physics/layer_2="Item/Inventory"

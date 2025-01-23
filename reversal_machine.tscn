@@ -1,0 +1,43 @@
+[gd_scene load_steps=7 format=3 uid="uid://ck7bjntffv1dt"]
+
+[ext_resource type="Script" path="res://reversal_machine.gd" id="1_04snq"]
+[ext_resource type="Script" path="res://inventory.gd" id="1_k7xie"]
+[ext_resource type="Script" path="res://item_save.gd" id="2_q2oau"]
+[ext_resource type="Script" path="res://inventory_save.gd" id="3_lbawg"]
+
+[sub_resource type="Resource" id="Resource_hkl3w"]
+script = ExtResource("3_lbawg")
+contained = Array[ExtResource("2_q2oau")]([])
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oddlv"]
+size = Vector3(1, 0.5, 1)
+
+[node name="ReversalMachine" type="Node3D"]
+script = ExtResource("1_04snq")
+
+[node name="Inventory" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_k7xie")
+save = SubResource("Resource_hkl3w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Inventory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("BoxShape3D_oddlv")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+operation = 2
+use_collision = true
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="CSGBox3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+operation = 2
+size = Vector3(0.9, 0.9, 0.9)
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="CSGBox3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+operation = 2
+size = Vector3(0.9, 0.9, 0.9)
+
+[node name="Output" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)

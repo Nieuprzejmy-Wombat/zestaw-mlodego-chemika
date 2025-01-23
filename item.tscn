@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3 uid="uid://c6exqer38dh0o"]
+
+[ext_resource type="Script" path="res://item.gd" id="1_b76by"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_272hu"]
+size = Vector3(1, 0.1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jhvoq"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_whe1h"]
+size = Vector2(1, 1)
+
+[node name="Item" type="RigidBody3D"]
+collision_layer = 3
+script = ExtResource("1_b76by")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_272hu")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_jhvoq")
+mesh = SubResource("PlaneMesh_whe1h")

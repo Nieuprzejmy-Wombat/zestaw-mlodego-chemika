@@ -1,7 +1,6 @@
 extends Area3D
 
-@export_node_path("Area3D")
-var other
+@export var other: Area3D
 
 func _on_area_entered(area: Area3D) -> void:
 	area.global_position=other.global_position+global_position-area.global_position
