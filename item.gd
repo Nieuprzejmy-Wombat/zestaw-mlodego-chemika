@@ -1,4 +1,5 @@
 extends RigidBody3D
+class_name Item
 
 @onready var world: GameWorld = get_tree().current_scene
 

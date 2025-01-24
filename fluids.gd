@@ -1,10 +1,9 @@
 extends Resource
 @export var locations: Dictionary
-enum FluidType {NONE, WATER}
 
-func lookup(location: Vector3) -> FluidType:
-	var res: FluidType = locations.find_key(location)
-	return res if res else FluidType.NONE
+
+func lookup(location: Vector3) -> Fluid:
+	return locations[location.snapped(Vector3(0.25, 0.25, 0.25))]
 	
-func spawn(location: Vector3, fluid: FluidType) -> void:
-	locations[location] = fluid
+func spawn(location: Vector3, fluid: Fluid) -> void:
+	locations[location.snapped(Vector3(0.25, 0.25, 0.25))] = fluid
