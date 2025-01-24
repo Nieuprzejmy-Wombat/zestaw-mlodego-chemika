@@ -16,6 +16,8 @@ class_name GameWorld
 
 @export var item_scene: PackedScene
 
+@onready var Fluids = $Fluids
+
 func spawn_material(save: ItemSave):
 	var curr_state := state.apply(save.point)
 	if curr_state < melting_point:
@@ -25,6 +27,11 @@ func spawn_material(save: ItemSave):
 		item.quaternion = save.rotation
 		add_child(item)
 	elif curr_state < evaporation_point:
-		pass # TODO
+		var item := item_scene.instantiate()
+		item.save = save
+		item.position = save.position
+		item.quaternion = save.rotation
+		item.type = FluidType.FluidType.WATER
+		Fluids.spawn(save.position, item)
 	else:
 		pass # TODO
