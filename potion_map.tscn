@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://7hljs16xx4oy"]
 
-[ext_resource type="PackedScene" uid="uid://db2sg07hinldk" path="res://potion_map_camera.tscn" id="1_8soty"]
+[ext_resource type="PackedScene" uid="uid://b3sk6b2qmg40a" path="res://potion_map_camera.tscn" id="1_8soty"]
 [ext_resource type="PackedScene" uid="uid://c86ggbmcr2sb1" path="res://wormhole.tscn" id="2_g4h7w"]
 
 [sub_resource type="Environment" id="Environment_msfof"]

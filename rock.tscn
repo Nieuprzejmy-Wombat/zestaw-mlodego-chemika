@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c7ookje3yof46"]
 
-[ext_resource type="Script" path="res://rock.gd" id="1_rocgl"]
+[ext_resource type="Script" uid="uid://b6bcgtv2q03f4" path="res://rock.gd" id="1_rocgl"]
 
 [node name="Rock" type="Node3D"]
 script = ExtResource("1_rocgl")

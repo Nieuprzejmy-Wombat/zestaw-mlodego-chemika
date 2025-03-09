@@ -1,12 +1,12 @@
 [gd_scene load_steps=28 format=3 uid="uid://bnraepxqkbtxt"]
 
-[ext_resource type="Script" path="res://example_level.gd" id="1_2ykp3"]
+[ext_resource type="Script" uid="uid://dr1drobmms7gy" path="res://example_level.gd" id="1_2ykp3"]
 [ext_resource type="PackedScene" uid="uid://c0v0wevtosl86" path="res://player.tscn" id="1_qnksc"]
 [ext_resource type="PackedScene" uid="uid://cuvvogj37sjty" path="res://settings_menu.tscn" id="3_vssgh"]
-[ext_resource type="Script" path="res://material_property.gd" id="4_6h12v"]
-[ext_resource type="Script" path="res://item_save.gd" id="5_4fc8q"]
+[ext_resource type="Script" uid="uid://lgwcvm0hcw4q" path="res://material_property.gd" id="4_6h12v"]
+[ext_resource type="Script" uid="uid://cnf016xxqby1g" path="res://item_save.gd" id="5_4fc8q"]
 [ext_resource type="PackedScene" uid="uid://c6exqer38dh0o" path="res://item.tscn" id="5_x3mo5"]
-[ext_resource type="Script" path="res://material_shape.gd" id="6_mu682"]
+[ext_resource type="Script" uid="uid://5ah5wwikycrj" path="res://material_shape.gd" id="6_mu682"]
 [ext_resource type="PackedScene" uid="uid://ck7bjntffv1dt" path="res://reversal_machine.tscn" id="8_rw2yu"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_62usr"]

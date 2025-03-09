@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://c86ggbmcr2sb1"]
 
-[ext_resource type="Script" path="res://wormhole.gd" id="1_4ul18"]
+[ext_resource type="Script" uid="uid://die5ymfgo6p5s" path="res://wormhole.gd" id="1_4ul18"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_7nxnn"]
 radius = 1.0
