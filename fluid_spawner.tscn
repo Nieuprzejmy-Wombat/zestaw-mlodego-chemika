@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://bsduqawbjy7p8"]
+
+[ext_resource type="Script" uid="uid://bj1h137mwtmkk" path="res://fluid_spawner.gd" id="1_53wu7"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_53wu7"]
+
+[node name="FluidSpawner" type="Node3D"]
+script = ExtResource("1_53wu7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_53wu7")

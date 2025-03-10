@@ -16,7 +16,6 @@ class_name GameWorld
 
 @export var item_scene: PackedScene
 
-@onready var Fluids = $Fluids
 
 func spawn_material(save: ItemSave):
 	var curr_state := state.apply(save.point)
@@ -31,7 +30,6 @@ func spawn_material(save: ItemSave):
 		item.save = save
 		item.position = save.position
 		item.quaternion = save.rotation
-		item.type = FluidType.FluidType.WATER
-		Fluids.spawn(save.position, item)
+		spawn_material(save)
 	else:
 		pass # TODO

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://bnraepxqkbtxt"]
+[gd_scene load_steps=29 format=3 uid="uid://bnraepxqkbtxt"]
 
 [ext_resource type="Script" uid="uid://dr1drobmms7gy" path="res://example_level.gd" id="1_2ykp3"]
 [ext_resource type="PackedScene" uid="uid://c0v0wevtosl86" path="res://player.tscn" id="1_qnksc"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://c6exqer38dh0o" path="res://item.tscn" id="5_x3mo5"]
 [ext_resource type="Script" uid="uid://5ah5wwikycrj" path="res://material_shape.gd" id="6_mu682"]
 [ext_resource type="PackedScene" uid="uid://ck7bjntffv1dt" path="res://reversal_machine.tscn" id="8_rw2yu"]
+[ext_resource type="PackedScene" uid="uid://bsduqawbjy7p8" path="res://fluid_spawner.tscn" id="9_ymddn"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_62usr"]
 
@@ -122,6 +123,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.93064, 0)
 use_collision = true
 size = Vector3(17.485, 0.245, 22.185)
 
+[node name="CSGBox3D2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.897374, 0.441271, 0, -0.441271, 0.897374, 5.86673, 2.05533, 1.14175)
+use_collision = true
+size = Vector3(1.67704, 0.245, 10.8554)
+
 [node name="Player" parent="." instance=ExtResource("1_qnksc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55925, 0)
 
@@ -138,5 +144,9 @@ visible = false
 
 [node name="ReversalMachine" parent="." instance=ExtResource("8_rw2yu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.17465, 0.950863, -0.033576)
+
+[node name="FluidSpawner" parent="." instance=ExtResource("9_ymddn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.92836, 2.92756, 0)
+spawn_delta = 0.1
 
 [connection signal="hidden" from="SettingsMenu" to="." method="_on_settings_menu_hidden"]
