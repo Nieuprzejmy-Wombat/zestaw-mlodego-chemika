@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cuvvogj37sjty"]
 
-[ext_resource type="Script" uid="uid://dsn4xppn1dvqe" path="res://settings_menu.gd" id="1_l3h3t"]
+[ext_resource type="Script" uid="uid://dtohahpr0g1sr" path="res://settings_menu.gd" id="1_l3h3t"]
 
 [node name="SettingsMenu" type="TabContainer"]
 anchors_preset = 15
@@ -38,7 +38,7 @@ text = "Field of view (FOV):"
 [node name="Fov" type="HSlider" parent="Graphics" groups=["setting"]]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 50.0
+min_value = 60.0
 max_value = 120.0
 value = 70.0
 

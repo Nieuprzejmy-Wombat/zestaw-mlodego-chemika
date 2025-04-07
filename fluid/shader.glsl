@@ -1,7 +1,7 @@
 #[compute]
 #version 450
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 32) in;
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 16) in;
 
 
 
@@ -10,7 +10,7 @@ layout(set = 0, binding = 0, std430) readonly restrict buffer ChunkNeighbourBuff
 } chunkNeighbourBuffer;
 
 layout(set = 0, binding = 1, std430) restrict buffer ChunkDataBuffer {
-	float data[][32][32][32][16][10];
+	float data[][16][16][16][16][10];
 } chunkDataBuffer;
 
 layout(set = 0, binding = 2, std430) writeonly restrict buffer ActivityBuffer {
@@ -38,25 +38,32 @@ layout(set = 1, binding = 4, std430) readonly restrict buffer PressureMultiplier
 	float data;
 } pressureMultiplierBuffer;
 
+layout(set = 1, binding = 5, std430) readonly restrict buffer DefaultVoxelBuffer {
+	float data[16][10];
+} defaultVoxelBuffer;
+
 
 layout(set = 2, binding = 0, std430) restrict buffer FullnessBuffer {
-	uint data[][32][32][32];
+	uint data[][16][16][16];
 } fullnessBuffer;
 
 
 
 uint chunkOffset(uint pos) {
-	return floor((32+int(pos)-1)/32);
+	return uint(floor((16+int(pos)-1)/16)+1);
 }
 
 float[16][10] getVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z){
 	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
-	return chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%32][(int(gl_LocalInvocationID.y+y)-1)%32][(int(gl_LocalInvocationID.z+z)-1)%32];
+	if (currentChunk >= chunkDataBuffer.data.length()) {
+		return defaultVoxelBuffer.data;
+	}
+	return chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16];
 }
 
 void setVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, float data[16][10]){
 	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
-	chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%32][(int(gl_LocalInvocationID.y+y)-1)%32][(int(gl_LocalInvocationID.z+z)-1)%32] = data;
+	chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16] = data;
 }
 
 float calculateMassMultiplier(vec3 point){
@@ -83,7 +90,7 @@ float repel(float dist, float rs){
 }
 
 vec3 calculatePressure(uint chunkNeighbours[3][3][3], vec3 pos, float volume){
-	vec3 acc = gravityBuffer;
+	vec3 acc = gravityBuffer.data;
 	for (uint x = 0; x<3; x++){
 		for (uint y = 0; y<3; y++){
 			for (uint z = 0; z<3; z++){
@@ -103,9 +110,9 @@ vec3 calculatePressure(uint chunkNeighbours[3][3][3], vec3 pos, float volume){
 void applyMovement(uint chunkNeighbours[3][3][3]) {
 	float currentVoxel[16][10] = getVoxel(chunkNeighbours, 1, 1, 1);
 	for(uint i = 0; i<16; i++){
-		currentVoxel[i][3]+=currentVoxel[i][6]*gravityBuffer.data;
-		currentVoxel[i][4]+=currentVoxel[i][7]*gravityBuffer.data;
-		currentVoxel[i][5]+=currentVoxel[i][8]*gravityBuffer.data;
+		currentVoxel[i][3]+=currentVoxel[i][6]*timeBuffer.data;
+		currentVoxel[i][4]+=currentVoxel[i][7]*timeBuffer.data;
+		currentVoxel[i][5]+=currentVoxel[i][8]*timeBuffer.data;
 	}
 	setVoxel(chunkNeighbours, 1, 1, 1, currentVoxel);
 }
@@ -127,7 +134,7 @@ void recalculateVelocities(uint chunkNeighbours[3][3][3]){
 
 uint swapFullness(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, uint data){
 	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
-	return atomicExchange(fullnessBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%32][(int(gl_LocalInvocationID.y+y)-1)%32][(int(gl_LocalInvocationID.z+z)-1)%32], data)
+	return atomicExchange(fullnessBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16], data);
 }
 
 
@@ -138,7 +145,7 @@ void main() {
 	
 	applyMovement(chunkNeighbours);
 
-	previousVoxel = getVoxel(chunkNeighbours, 1, 1, 1);
+	float previousVoxel[16][10] = getVoxel(chunkNeighbours, 1, 1, 1);
 
 	uint voxelCount = 0;
 	float currentVoxel[16][10];
@@ -198,7 +205,7 @@ void main() {
 	
 	for (uint i = 0; i < voxelCount; i++) {
 		if (floor(currentVoxel[i][3])!=0 || floor(currentVoxel[i][4])!=0 || floor(currentVoxel[i][5])!=0){
-			completeness = bitfieldInsert(completeness, 4294967295, i, 1);
+			completeness = bitfieldInsert(completeness, uint(4294967295), int(i), 1);
 		}
 	}
 	
@@ -207,15 +214,16 @@ void main() {
 	
 	for (uint t=0; completeness != 0 && t<1024; t++){
 		for (uint i = 0; i < 16; i++) {
-			if (bitfieldExtract(completeness, i, 1) != 0){
-				uint fullness = swapFullness(chunkNeighbours, floor(currentVoxel[i][3]+1.0), floor(currentVoxel[i][4]+1.0), floor(currentVoxel[i][5]+1.0), 16);
+			if (bitfieldExtract(completeness, int(i), 1) != 0){
+				uint fullness = swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), uint(16));
 				if (fullness<16){
-					float voxel[16][10] = getVoxel(chunkNeighbours, floor(currentVoxel[i][3]+1.0), floor(currentVoxel[i][4]+1.0), floor(currentVoxel[i][5]+1.0));
+					float voxel[16][10];
+					voxel = getVoxel(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)));
 					voxel[fullness]=currentVoxel[i];
-					setVoxel(chunkNeighbours, floor(currentVoxel[i][3]+1.0), floor(currentVoxel[i][4]+1.0), floor(currentVoxel[i][5]+1.0), voxel);
+					setVoxel(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), voxel);
 					fullness+=1;
-					swapFullness(chunkNeighbours, floor(currentVoxel[i][3]+1.0), floor(currentVoxel[i][4]+1.0), floor(currentVoxel[i][5]+1.0), fullness);
-					completeness = bitfieldInsert(completeness, 0, i, 1);
+					swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), fullness);
+					completeness = bitfieldInsert(completeness, uint(0), int(i), 1);
 				}
 			}
 		}

@@ -1,14 +1,15 @@
-[gd_scene load_steps=29 format=3 uid="uid://bnraepxqkbtxt"]
+[gd_scene load_steps=30 format=3 uid="uid://bnraepxqkbtxt"]
 
 [ext_resource type="Script" uid="uid://dr1drobmms7gy" path="res://example_level.gd" id="1_2ykp3"]
 [ext_resource type="PackedScene" uid="uid://c0v0wevtosl86" path="res://player.tscn" id="1_qnksc"]
 [ext_resource type="PackedScene" uid="uid://cuvvogj37sjty" path="res://settings_menu.tscn" id="3_vssgh"]
-[ext_resource type="Script" uid="uid://lgwcvm0hcw4q" path="res://material_property.gd" id="4_6h12v"]
-[ext_resource type="Script" uid="uid://cnf016xxqby1g" path="res://item_save.gd" id="5_4fc8q"]
+[ext_resource type="Script" uid="uid://ow08tmai3u6o" path="res://material_property.gd" id="4_6h12v"]
+[ext_resource type="Script" uid="uid://cncdl6sdlj77v" path="res://item_save.gd" id="5_4fc8q"]
 [ext_resource type="PackedScene" uid="uid://c6exqer38dh0o" path="res://item.tscn" id="5_x3mo5"]
-[ext_resource type="Script" uid="uid://5ah5wwikycrj" path="res://material_shape.gd" id="6_mu682"]
+[ext_resource type="Script" uid="uid://c6g0k1vtjg1be" path="res://material_shape.gd" id="6_mu682"]
 [ext_resource type="PackedScene" uid="uid://ck7bjntffv1dt" path="res://reversal_machine.tscn" id="8_rw2yu"]
 [ext_resource type="PackedScene" uid="uid://bsduqawbjy7p8" path="res://fluid_spawner.tscn" id="9_ymddn"]
+[ext_resource type="Script" uid="uid://c4oitp5ytju7v" path="res://fluid/sim.gd" id="10_0qydm"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_62usr"]
 
@@ -72,6 +73,7 @@ tonemap_mode = 2
 ssao_enabled = true
 sdfgi_enabled = true
 glow_enabled = true
+volumetric_fog_enabled = true
 
 [sub_resource type="Resource" id="Resource_tr6bp"]
 script = ExtResource("6_mu682")
@@ -148,5 +150,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.17465, 0.950863, -0.033576)
 [node name="FluidSpawner" parent="." instance=ExtResource("9_ymddn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.92836, 2.92756, 0)
 spawn_delta = 0.1
+
+[node name="FluidSim" type="Node3D" parent="."]
+script = ExtResource("10_0qydm")
+mass_curve = PackedFloat32Array(1.195, 1.415)
+mass_direction = PackedFloat32Array(0, 1, 0)
+gravity = PackedFloat32Array(0, -9.8, 0)
+pressure_multiplier = PackedFloat32Array(1)
+metadata/_custom_type_script = "uid://c4oitp5ytju7v"
 
 [connection signal="hidden" from="SettingsMenu" to="." method="_on_settings_menu_hidden"]
