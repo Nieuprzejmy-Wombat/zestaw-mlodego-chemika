@@ -4,37 +4,44 @@ class_name FluidSim
 var chunks: Array[RDFluidChunk] = []
 var neighbours_buffer: RID
 var compute_width := 0
-@onready var data_mutex: Mutex = Mutex.new()
+var data_mutex := Mutex.new()
 
-@onready var rd := RenderingServer.create_local_rendering_device()
+var rd: RenderingDevice
 var pipeline: RID
 var shader: RID
 
 @export var mass_curve: PackedFloat32Array
-@onready var mass_curve_buffer := rd.storage_buffer_create(
-	mass_curve.to_byte_array().size(), mass_curve.to_byte_array())
+var mass_curve_buffer: RID
 
 @export var mass_direction: PackedFloat32Array
-@onready var mass_direction_buffer := rd.storage_buffer_create(
-	mass_direction.to_byte_array().size(), mass_direction.to_byte_array())
+var mass_direction_buffer: RID
 
 @export var gravity: PackedFloat32Array
-@onready var gravity_buffer := rd.storage_buffer_create(
-	gravity.to_byte_array().size(), gravity.to_byte_array())
+var gravity_buffer: RID
 
 @export var pressure_multiplier: PackedFloat32Array
-@onready var pressure_multiplier_buffer := rd.storage_buffer_create(
-	pressure_multiplier.to_byte_array().size(), pressure_multiplier.to_byte_array())
+var pressure_multiplier_buffer: RID
 
 var default_voxel_buffer: RID
 
 @export var chunk_size := 1.0
 
 func _ready() -> void:
+	data_mutex.lock()
+	rd = RenderingServer.create_local_rendering_device()
+	mass_curve_buffer = rd.storage_buffer_create(
+		mass_curve.to_byte_array().size(), mass_curve.to_byte_array())
+	mass_direction_buffer = rd.storage_buffer_create(
+		mass_direction.to_byte_array().size(), mass_direction.to_byte_array())
+	gravity_buffer = rd.storage_buffer_create(
+		gravity.to_byte_array().size(), gravity.to_byte_array())
+	pressure_multiplier_buffer = rd.storage_buffer_create(
+		pressure_multiplier.to_byte_array().size(), pressure_multiplier.to_byte_array())
+	
 	var shader_file := load("res://fluid/shader.glsl");
 	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
 	shader = rd.shader_create_from_spirv(shader_spirv)
-	pipeline = rd.compute_pipeline_create(shader)
+	pipeline = rd.compute_pipeline_create(shader) # TODO fix the blockage here
 	
 	var default_voxel_arr := PackedFloat32Array()
 	default_voxel_arr.resize(16*10)
@@ -42,6 +49,8 @@ func _ready() -> void:
 	var default_voxel_data := default_voxel_arr.to_byte_array()
 	default_voxel_buffer = rd.storage_buffer_create(
 		default_voxel_data.size(), default_voxel_data)
+	
+	data_mutex.unlock()
 
 func recalculate_neighbours() -> void:
 	rd.free_rid(neighbours_buffer)
