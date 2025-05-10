@@ -16,4 +16,4 @@ func _ready() -> void:
 	chunk.position = Vector3i(0, 0, 0)
 	chunk.data.resize(16*16*16*16*10)
 	chunk.data.fill(0)
-	%FluidSim.reset_chunks([chunk])
+	$FluidSim.reset_chunks(Array([chunk], TYPE_OBJECT,"Resource", FluidChunkSave))

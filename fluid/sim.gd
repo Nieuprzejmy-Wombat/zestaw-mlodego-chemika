@@ -53,7 +53,8 @@ func _ready() -> void:
 	data_mutex.unlock()
 
 func recalculate_neighbours() -> void:
-	rd.free_rid(neighbours_buffer)
+	if neighbours_buffer != RID():
+		rd.free_rid(neighbours_buffer)
 	var neighbours := PackedInt32Array()
 	for chunk in chunks:
 		if chunk.active:
@@ -197,7 +198,7 @@ func _physics_process(delta: float) -> void:
 	rd.submit()
 	rd.sync()
 	
-	var activity := rd.buffer_get_data(activity_buffer).to_float32_array()
+	var activity := rd.buffer_get_data(activity_buffer).to_int32_array()
 	var change := false
 	for i in range(chunks.size()):
 		if chunks[i].active != (activity[i]!=0):
