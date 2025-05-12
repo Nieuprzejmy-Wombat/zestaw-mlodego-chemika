@@ -29,6 +29,13 @@ var default_voxel_buffer: RID
 func _ready() -> void:
 	data_mutex.lock()
 	rd = RenderingServer.create_local_rendering_device()
+	rd.submit()
+	rd.sync()
+	
+	var shader_file := load("res://fluid/test.glsl");
+	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
+	shader = rd.shader_create_from_spirv(shader_spirv)
+	
 	mass_curve_buffer = rd.storage_buffer_create(
 		mass_curve.to_byte_array().size(), mass_curve.to_byte_array())
 	mass_direction_buffer = rd.storage_buffer_create(
@@ -37,11 +44,6 @@ func _ready() -> void:
 		gravity.to_byte_array().size(), gravity.to_byte_array())
 	pressure_multiplier_buffer = rd.storage_buffer_create(
 		pressure_multiplier.to_byte_array().size(), pressure_multiplier.to_byte_array())
-	
-	var shader_file := load("res://fluid/shader.glsl");
-	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
-	shader = rd.shader_create_from_spirv(shader_spirv)
-	pipeline = rd.compute_pipeline_create(shader) # TODO fix the blockage here
 	
 	var default_voxel_arr := PackedFloat32Array()
 	default_voxel_arr.resize(16*10)
@@ -53,7 +55,8 @@ func _ready() -> void:
 	data_mutex.unlock()
 
 func recalculate_neighbours() -> void:
-	rd.free_rid(neighbours_buffer)
+	if neighbours_buffer.is_valid():
+		rd.free_rid(neighbours_buffer)
 	var neighbours := PackedInt32Array()
 	for chunk in chunks:
 		if chunk.active:
@@ -107,6 +110,7 @@ func _physics_process(delta: float) -> void:
 		data_mutex.unlock()
 		return
 	
+	pipeline = rd.compute_pipeline_create(shader)# TODO fix the blockage here
 	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 	
@@ -125,12 +129,12 @@ func _physics_process(delta: float) -> void:
 	activity_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	data_uniform.binding = 2
 	var activity_arr := PackedInt32Array()
-	activity_arr.resize(compute_width)
+	activity_arr.resize(chunks.size())
 	activity_arr.fill(true)
 	var activity_data := activity_arr.to_byte_array()
 	var activity_buffer := rd.storage_buffer_create(activity_data.size(), activity_data)
 	data_uniform.add_id(activity_buffer)
-	
+	breakpoint
 	var input_set := rd.uniform_set_create(
 		[neighbours_uniform, data_uniform, activity_uniform],
 		shader, 0)
@@ -215,7 +219,7 @@ func _physics_process(delta: float) -> void:
 			volume.size = Vector3(chunk_size, chunk_size, chunk_size)
 			volume.material = ShaderMaterial.new()
 			volume.material.shader = load("res://fluid/display.tres")
-			volume.global_position = Vector3(chunk.position)
+			volume.position = Vector3(chunk.position)
 			add_child(volume)
 	
 	data_mutex.unlock()
