@@ -14,6 +14,8 @@ func _ready() -> void:
 	reload_settings()
 	var chunk := FluidChunkSave.new()
 	chunk.position = Vector3i(0, 0, 0)
+	chunk.data = PackedFloat32Array()
 	chunk.data.resize(16*16*16*16*10)
 	chunk.data.fill(0)
-	$FluidSim.reset_chunks(Array([chunk], TYPE_OBJECT,"Resource", FluidChunkSave))
+	var arr:Array[FluidChunkSave] = [chunk]
+	$FluidSim.reset_chunks(arr)

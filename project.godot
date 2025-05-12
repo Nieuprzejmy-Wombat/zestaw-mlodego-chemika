@@ -77,3 +77,8 @@ locale/language_filter=["en", "pl"]
 
 3d_physics/layer_1="Normal"
 3d_physics/layer_2="Item/Inventory"
+
+[physics]
+
+2d/run_on_separate_thread=true
+3d/run_on_separate_thread=true
