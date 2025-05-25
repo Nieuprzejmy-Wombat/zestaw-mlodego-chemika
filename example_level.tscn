@@ -70,9 +70,6 @@ sky_material = SubResource("ProceduralSkyMaterial_avcno")
 background_mode = 2
 sky = SubResource("Sky_or6wb")
 tonemap_mode = 2
-ssao_enabled = true
-sdfgi_enabled = true
-glow_enabled = true
 volumetric_fog_enabled = true
 
 [sub_resource type="Resource" id="Resource_tr6bp"]
@@ -123,6 +120,7 @@ environment = SubResource("Environment_1uwq7")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.91706, -0.309886, 0.250941, 0, 0.62932, 0.777146, -0.398749, 0.71269, -0.577125, 0, 0, 0)
 shadow_enabled = true
+directional_shadow_mode = 1
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.93064, 0)

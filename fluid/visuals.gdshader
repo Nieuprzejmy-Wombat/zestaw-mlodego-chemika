@@ -1,17 +1,17 @@
 shader_type fog;
 
-uniform float data[16*8*4*8*8*8*16*10];
+uniform float data[8*4*2*8*8*8*16*10];
 
 float current(vec3 uvw, int sub) {
-	int gx = int(uvw.x*16.0);
-	int gy = int(uvw.y*8.0);
-	int gz = int(uvw.z*4.0);
-	int lx = int(uvw.x*16.0*8.0)%8;
-	int ly = int(uvw.y*8.0*8.0)%8;
-	int lz = int(uvw.z*4.0*8.0)%8;
+	int gx = int(uvw.x*4.0);
+	int gy = int(uvw.y*2.0);
+	int gz = int(uvw.z*1.0);
+	int lx = int(uvw.x*4.0*8.0)%8;
+	int ly = int(uvw.y*2.0*8.0)%8;
+	int lz = int(uvw.z*1.0*8.0)%8;
 	return data[
-		gx*8*4*8*8*8*16*10
-		+gy*4*8*8*8*16*10
+		gx*2*1*8*8*8*16*10
+		+gy*1*8*8*8*16*10
 		+gz*8*8*8*16*10
 		+lx*8*8*16*10
 		+ly*8*16*10

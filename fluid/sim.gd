@@ -6,7 +6,7 @@ const fraction_size := 16
 
 @onready var rd := RenderingServer.create_local_rendering_device()
 @onready var shader := rd.shader_create_from_spirv(
-	load("res://fluid/empty.glsl")
+	load("res://fluid/shader.glsl")
 	.get_spirv())
 
 func create_float_buffer(default: float, length: int) -> RID:
@@ -20,7 +20,7 @@ func floats_to_buffer(packed: PackedFloat32Array) -> RID:
 	var bytes := packed.to_byte_array()
 	return rd.storage_buffer_create(bytes.size(), bytes)
 
-@export var dimensions := Vector3i(16,8,4)
+@export var dimensions := Vector3i(4, 2, 1)
 @export var voxel_size := 0.02
 @export var mass_curve := PackedFloat32Array([0.0])
 @export var mass_direction := PackedFloat32Array([0.1, 0.2, 0.3])
@@ -133,10 +133,11 @@ func process(delta: float) -> void:
 	fullness_uniform.add_id(fullness)
 	var tool_set := rd.uniform_set_create(
 		[fullness_uniform],
-		shader, 
+		shader,
 		2)
 	
 	var pipeline := rd.compute_pipeline_create(shader)
+	
 	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 	rd.compute_list_bind_uniform_set(compute_list, data_set, 0)
@@ -147,8 +148,9 @@ func process(delta: float) -> void:
 	rd.submit()
 	rd.sync()
 	
-	var buffer_data := rd.buffer_get_data(chunk_data).to_float32_array()
-	material.set_shader_parameter("data", buffer_data)
+	rd.buffer_get_data_async(chunk_data, func(data):
+		material.set_shader_parameter("data", data.to_float32_array())
+		)
 	
 	rd.free_rid(time_buffer)
 	
@@ -156,4 +158,4 @@ func process(delta: float) -> void:
 	rd.free_rid(data_set)
 
 func _process(delta: float) -> void:
-	process(delta)
+	process.call_deferred(delta)
