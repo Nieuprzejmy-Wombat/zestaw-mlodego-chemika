@@ -222,11 +222,15 @@ void main() {
 					uint fullness = swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), uint(fraction_size));
 					if (fullness<fraction_size){
 						float voxel[fraction_size][10];
-						//voxel = getVoxel(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)));
-						//voxel[fullness] = currentVoxel[i];
-						//setVoxel(chunkNeighbours, (uint(floor(currentVoxel[i][3]+1.0))), (uint(floor(currentVoxel[i][4]+1.0))), (uint(floor(currentVoxel[i][5]+1.0))), voxel);
-						uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+uint(floor(currentVoxel[i][3]+1.0)))][chunkOffset(gl_LocalInvocationID.y+uint(floor(currentVoxel[i][4]+1.0)))][chunkOffset(gl_LocalInvocationID.z+uint(floor(currentVoxel[i][5]+1.0))))];
-						chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+uint(floor(currentVoxel[i][3]+1.0)))-1)%chunk_size][(int(gl_LocalInvocationID.y+uint(floor(currentVoxel[i][4]+1.0)))-1)%chunk_size][(int(gl_LocalInvocationID.z+uint(floor(currentVoxel[i][5]+1.0))))-1)%chunk_size][fullness] = currentVoxel[i];
+						uint currentChunk = chunkNeighbours
+							[chunkOffset(gl_LocalInvocationID.x+uint(floor(currentVoxel[i][3]+1.0)))]
+							[chunkOffset(gl_LocalInvocationID.y+uint(floor(currentVoxel[i][4]+1.0)))]
+							[chunkOffset(gl_LocalInvocationID.z+uint(floor(currentVoxel[i][5]+1.0)))];
+						chunkDataBuffer.data[currentChunk] // TU JE BŁĄD
+							[(int(gl_LocalInvocationID.x+uint(floor(currentVoxel[i][3]+1.0)))-1)%chunk_size]
+							[(int(gl_LocalInvocationID.y+uint(floor(currentVoxel[i][4]+1.0)))-1)%chunk_size]
+							[(int(gl_LocalInvocationID.z+uint(floor(currentVoxel[i][5]+1.0)))-1)%chunk_size]
+							[fullness] = currentVoxel[i];
 						fullness+=1;
 						swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), fullness);
 						completeness = bitfieldInsert(completeness, uint(0), int(i), 1);

@@ -4,8 +4,14 @@ class_name FluidVolume
 const chunk_size := 8
 const fraction_size := 16
 
+func create_shader_or_error(spirv: RDShaderSPIRV) -> RID:
+	var err := spirv.compile_error_compute
+	if err:
+		breakpoint
+	return rd.shader_create_from_spirv(spirv)
+
 @onready var rd := RenderingServer.create_local_rendering_device()
-@onready var shader := rd.shader_create_from_spirv(
+@onready var shader := create_shader_or_error(
 	load("res://fluid/shader.glsl")
 	.get_spirv())
 
