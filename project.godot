@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 
 [debug]
 
+settings/stdout/print_gpu_profile=true
 settings/stdout/verbose_stdout=true
 
 [display]
@@ -28,6 +29,10 @@ settings/stdout/verbose_stdout=true
 window/size/mode=3
 window/size/initial_position_type=4
 window/size/borderless=true
+
+[editor]
+
+run/main_run_args="--gpu-index 0"
 
 [global_group]
 

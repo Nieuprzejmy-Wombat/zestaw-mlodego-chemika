@@ -6,7 +6,7 @@ const fraction_size := 16
 
 @onready var rd := RenderingServer.create_local_rendering_device()
 @onready var shader := rd.shader_create_from_spirv(
-	preload("res://fluid/shader.glsl")
+	load("res://fluid/empty.glsl")
 	.get_spirv())
 
 func create_float_buffer(default: float, length: int) -> RID:
@@ -76,7 +76,6 @@ func reset(data: PackedFloat32Array) -> void:
 		*4)
 
 func process(delta: float) -> void:
-	push_warning("haha")
 	if (current_computation_width == 0):
 		return
 	var neighbourhood_uniform := RDUniform.new()
@@ -137,13 +136,8 @@ func process(delta: float) -> void:
 		shader, 
 		2)
 	
-	push_warning("aiai")
-	rd.compute_list_end()
-	print("uiui")
 	var pipeline := rd.compute_pipeline_create(shader)
-	print(pipeline.get_id())
 	var compute_list := rd.compute_list_begin()
-	print(compute_list)
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 	rd.compute_list_bind_uniform_set(compute_list, data_set, 0)
 	rd.compute_list_bind_uniform_set(compute_list, config_set, 1)
@@ -154,7 +148,6 @@ func process(delta: float) -> void:
 	rd.sync()
 	
 	var buffer_data := rd.buffer_get_data(chunk_data).to_float32_array()
-	print(buffer_data)
 	material.set_shader_parameter("data", buffer_data)
 	
 	rd.free_rid(time_buffer)
