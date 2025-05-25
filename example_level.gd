@@ -12,10 +12,7 @@ func _on_settings_menu_hidden() -> void:
 
 func _ready() -> void:
 	reload_settings()
-	var chunk := FluidChunkSave.new()
-	chunk.position = Vector3i(0, 0, 0)
-	chunk.data = PackedFloat32Array()
-	chunk.data.resize(16*16*16*16*10)
-	chunk.data.fill(0)
-	var arr:Array[FluidChunkSave] = [chunk]
-	$FluidSim.reset_chunks(arr)
+	var data := PackedFloat32Array()
+	data.resize(10*16*8*8*8*4*8*16)
+	data.fill(0.1)
+	$FluidVolume.reset.call_deferred(data)

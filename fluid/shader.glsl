@@ -1,7 +1,10 @@
 #[compute]
-#version 450
+#version 430
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 16) in;
+const uint chunk_size = 8;
+const uint fraction_size = 16;
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 
 
@@ -10,7 +13,7 @@ layout(set = 0, binding = 0, std430) readonly restrict buffer ChunkNeighbourBuff
 } chunkNeighbourBuffer;
 
 layout(set = 0, binding = 1, std430) restrict buffer ChunkDataBuffer {
-	float data[][16][16][16][16][10];
+	float data[][chunk_size][chunk_size][chunk_size][fraction_size][10];
 } chunkDataBuffer;
 
 layout(set = 0, binding = 2, std430) writeonly restrict buffer ActivityBuffer {
@@ -39,31 +42,31 @@ layout(set = 1, binding = 4, std430) readonly restrict buffer PressureMultiplier
 } pressureMultiplierBuffer;
 
 layout(set = 1, binding = 5, std430) readonly restrict buffer DefaultVoxelBuffer {
-	float data[16][10];
+	float data[fraction_size][10];
 } defaultVoxelBuffer;
 
 
 layout(set = 2, binding = 0, std430) restrict buffer FullnessBuffer {
-	uint data[][16][16][16];
+	uint data[][chunk_size][chunk_size][chunk_size];
 } fullnessBuffer;
 
 
 
 uint chunkOffset(uint pos) {
-	return uint(floor((16+int(pos)-1)/16)+1);
+	return uint(floor((chunk_size+int(pos)-1)/chunk_size)+1);
 }
 
-float[16][10] getVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z){
-	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
+float[fraction_size][10] getVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z){
+	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][chunkOffset(gl_LocalInvocationID.y+y)][chunkOffset(gl_LocalInvocationID.z+z)];
 	if (currentChunk >= chunkDataBuffer.data.length()) {
 		return defaultVoxelBuffer.data;
 	}
-	return chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16];
+	return chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%chunk_size][(int(gl_LocalInvocationID.y+y)-1)%chunk_size][(int(gl_LocalInvocationID.z+z)-1)%chunk_size];
 }
 
-void setVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, float data[16][10]){
-	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
-	chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16] = data;
+void setVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, float data[fraction_size][10]){
+	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][chunkOffset(gl_LocalInvocationID.y+y)][chunkOffset(gl_LocalInvocationID.z+z)];
+	chunkDataBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%chunk_size][(int(gl_LocalInvocationID.y+y)-1)%chunk_size][(int(gl_LocalInvocationID.z+z)-1)%chunk_size] = data;
 }
 
 float calculateMassMultiplier(vec3 point){
@@ -94,12 +97,12 @@ vec3 calculatePressure(uint chunkNeighbours[3][3][3], vec3 pos, float volume){
 	for (uint x = 0; x<3; x++){
 		for (uint y = 0; y<3; y++){
 			for (uint z = 0; z<3; z++){
-				float currentVoxel[16][10] = getVoxel(chunkNeighbours, x, y, z);
-				for (uint w = 0; w<16; w++){
+				float currentVoxel[fraction_size][10] = getVoxel(chunkNeighbours, x, y, z);
+				for (uint w = 0; w<fraction_size; w++){
 					vec3 currentPosition = vec3(currentVoxel[w][3]+float(x)-1.0, currentVoxel[w][4]+float(y)-1.0, currentVoxel[w][5]+float(z)-1.0);
 					float force = repel(distance(currentPosition, pos), radius(volume) + radius(currentVoxel[w][9]));
 					force*=calculateFractionMass(currentVoxel[w]);
-					acc += (currentPosition-pos) * (force/(16.0*3.0*3.0*3.0 - 1));
+					acc += (currentPosition-pos) * (force/(float(fraction_size)*3.0*3.0*3.0 - 1));
 				}
 			}
 		}
@@ -108,8 +111,8 @@ vec3 calculatePressure(uint chunkNeighbours[3][3][3], vec3 pos, float volume){
 }
 
 void applyMovement(uint chunkNeighbours[3][3][3]) {
-	float currentVoxel[16][10] = getVoxel(chunkNeighbours, 1, 1, 1);
-	for(uint i = 0; i<16; i++){
+	float currentVoxel[fraction_size][10] = getVoxel(chunkNeighbours, 1, 1, 1);
+	for(uint i = 0; i<fraction_size; i++){
 		currentVoxel[i][3]+=currentVoxel[i][6]*timeBuffer.data;
 		currentVoxel[i][4]+=currentVoxel[i][7]*timeBuffer.data;
 		currentVoxel[i][5]+=currentVoxel[i][8]*timeBuffer.data;
@@ -118,8 +121,8 @@ void applyMovement(uint chunkNeighbours[3][3][3]) {
 }
 
 void recalculateVelocities(uint chunkNeighbours[3][3][3]){
-	float currentVoxel[16][10] = getVoxel(chunkNeighbours, 1, 1, 1);
-	for (uint i=0; i<16; i++){
+	float currentVoxel[fraction_size][10] = getVoxel(chunkNeighbours, 1, 1, 1);
+	for (uint i=0; i<fraction_size; i++){
 		vec3 fix = gravityBuffer.data;
 		fix += calculatePressure(chunkNeighbours, vec3(currentVoxel[i][3], currentVoxel[i][4], currentVoxel[i][5]), currentVoxel[i][9]) * calculateFractionMass(currentVoxel[i]);
 		// fix += TODO some alignment and stickyness forces here
@@ -133,8 +136,8 @@ void recalculateVelocities(uint chunkNeighbours[3][3][3]){
 }
 
 uint swapFullness(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, uint data){
-	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][gl_LocalInvocationID.y+y][gl_LocalInvocationID.z+z];
-	return atomicExchange(fullnessBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%16][(int(gl_LocalInvocationID.y+y)-1)%16][(int(gl_LocalInvocationID.z+z)-1)%16], data);
+	uint currentChunk = chunkNeighbours[chunkOffset(gl_LocalInvocationID.x+x)][chunkOffset(gl_LocalInvocationID.y+y)][chunkOffset(gl_LocalInvocationID.z+z)];
+	return atomicExchange(fullnessBuffer.data[currentChunk][(int(gl_LocalInvocationID.x+x)-1)%chunk_size][(int(gl_LocalInvocationID.y+y)-1)%chunk_size][(int(gl_LocalInvocationID.z+z)-1)%chunk_size], data);
 }
 
 
@@ -145,12 +148,12 @@ void main() {
 	
 	applyMovement(chunkNeighbours);
 
-	float previousVoxel[16][10] = getVoxel(chunkNeighbours, 1, 1, 1);
+	float previousVoxel[fraction_size][10] = getVoxel(chunkNeighbours, 1, 1, 1);
 
 	uint voxelCount = 0;
-	float currentVoxel[16][10];
+	float currentVoxel[fraction_size][10];
 
-	for (uint i = 0; i < 16; i++) {
+	for (uint i = 0; i < fraction_size; i++) {
 		if (previousVoxel[i][9]!=0.0){
 			bool simmilar = false;
 			for (uint j = 0; j < voxelCount && !simmilar; j++){
@@ -213,11 +216,11 @@ void main() {
 	barrier();
 	
 	for (uint t=0; completeness != 0 && t<1024; t++){
-		for (uint i = 0; i < 16; i++) {
+		for (uint i = 0; i < fraction_size; i++) {
 			if (bitfieldExtract(completeness, int(i), 1) != 0){
-				uint fullness = swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), uint(16));
-				if (fullness<16){
-					float voxel[16][10];
+				uint fullness = swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), uint(fraction_size));
+				if (fullness<fraction_size){
+					float voxel[fraction_size][10];
 					voxel = getVoxel(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)));
 					voxel[fullness]=currentVoxel[i];
 					setVoxel(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), voxel);

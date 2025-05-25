@@ -1,225 +1,166 @@
-extends Node3D
-class_name FluidSim
+extends FogVolume
+class_name FluidVolume
 
-var chunks: Array[RDFluidChunk] = []
-var neighbours_buffer: RID
-var compute_width := 0
-var data_mutex := Mutex.new()
+const chunk_size := 8
+const fraction_size := 16
 
-var rd: RenderingDevice
-var pipeline: RID
-var shader: RID
+@onready var rd := RenderingServer.create_local_rendering_device()
+@onready var shader := rd.shader_create_from_spirv(
+	preload("res://fluid/shader.glsl")
+	.get_spirv())
 
-@export var mass_curve: PackedFloat32Array
-var mass_curve_buffer: RID
+func create_float_buffer(default: float, length: int) -> RID:
+	var packed := PackedFloat32Array()
+	packed.resize(length)
+	packed.fill(default)
+	var bytes := packed.to_byte_array()
+	return rd.storage_buffer_create(bytes.size(), bytes)
 
-@export var mass_direction: PackedFloat32Array
-var mass_direction_buffer: RID
+func floats_to_buffer(packed: PackedFloat32Array) -> RID:
+	var bytes := packed.to_byte_array()
+	return rd.storage_buffer_create(bytes.size(), bytes)
 
-@export var gravity: PackedFloat32Array
-var gravity_buffer: RID
+@export var dimensions := Vector3i(16,8,4)
+@export var voxel_size := 0.02
+@export var mass_curve := PackedFloat32Array([0.0])
+@export var mass_direction := PackedFloat32Array([0.1, 0.2, 0.3])
+@export var gravity := PackedFloat32Array([0.1, 0.2, 0.3])
+@export var pressure_multiplier := PackedFloat32Array([1.0])
 
-@export var pressure_multiplier: PackedFloat32Array
-var pressure_multiplier_buffer: RID
+@onready var mass_curve_buffer := floats_to_buffer(mass_curve)
+@onready var mass_direction_buffer := floats_to_buffer(mass_direction)
+@onready var gravity_buffer := floats_to_buffer(gravity)
+@onready var pressure_multiplier_buffer := floats_to_buffer(pressure_multiplier)
+@onready var default_voxel_buffer := create_float_buffer(0.0, fraction_size*10)
 
-var default_voxel_buffer: RID
+var neighbourhood: RID
+var chunk_data: RID
+var activity_buffer: RID
+var current_computation_width := 0
+var fullness: RID
 
-@export var chunk_size := 1.0
+# use .call_deferred so that it doesn't conflict with _process
+func reset(data: PackedFloat32Array) -> void:
+	if activity_buffer.is_valid():
+		rd.free_rid(activity_buffer)
+	if neighbourhood.is_valid():
+		rd.free_rid(neighbourhood)
+	if chunk_data.is_valid():
+		rd.free_rid(chunk_data)
+	current_computation_width = dimensions.x*dimensions.y*dimensions.z
+	var bytes := data.to_byte_array()
+	chunk_data = rd.storage_buffer_create(bytes.size(), bytes)
+	var raw_activity := PackedByteArray([0])
+	raw_activity.resize(current_computation_width*4)
+	raw_activity.fill(-1)
+	activity_buffer = rd.storage_buffer_create(raw_activity.size(), raw_activity)
+	var neighbourhood_data := PackedInt32Array()
+	neighbourhood_data.resize(current_computation_width*3*3*3)
+	for x in dimensions.x:
+		for y in dimensions.y:
+			for z in dimensions.z:
+				for dx in 3:
+					for dy in 3:
+						for dz in 3:
+							neighbourhood_data.append(
+								wrapi(x+dx-1, 0, dimensions.x)*dimensions.y*dimensions.z
+								+wrapi(y+dy-1, 0, dimensions.y)*dimensions.z
+								+wrapi(z+dz-1, 0, dimensions.z))
+	var neighbourhood_bytes := neighbourhood_data.to_byte_array()
+	neighbourhood = rd.storage_buffer_create(
+		neighbourhood_bytes.size(),
+		neighbourhood_bytes)
+	fullness = rd.storage_buffer_create(
+		dimensions.x*dimensions.y*dimensions.z
+		*chunk_size*chunk_size*chunk_size
+		*4)
 
-func _ready() -> void:
-	data_mutex.lock()
-	rd = RenderingServer.create_local_rendering_device()
-	rd.submit()
-	rd.sync()
-	
-	var shader_file := load("res://fluid/test.glsl");
-	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
-	shader = rd.shader_create_from_spirv(shader_spirv)
-	
-	mass_curve_buffer = rd.storage_buffer_create(
-		mass_curve.to_byte_array().size(), mass_curve.to_byte_array())
-	mass_direction_buffer = rd.storage_buffer_create(
-		mass_direction.to_byte_array().size(), mass_direction.to_byte_array())
-	gravity_buffer = rd.storage_buffer_create(
-		gravity.to_byte_array().size(), gravity.to_byte_array())
-	pressure_multiplier_buffer = rd.storage_buffer_create(
-		pressure_multiplier.to_byte_array().size(), pressure_multiplier.to_byte_array())
-	
-	var default_voxel_arr := PackedFloat32Array()
-	default_voxel_arr.resize(16*10)
-	default_voxel_arr.fill(0)
-	var default_voxel_data := default_voxel_arr.to_byte_array()
-	default_voxel_buffer = rd.storage_buffer_create(
-		default_voxel_data.size(), default_voxel_data)
-	
-	data_mutex.unlock()
-
-func recalculate_neighbours() -> void:
-	if neighbours_buffer.is_valid():
-		rd.free_rid(neighbours_buffer)
-	var neighbours := PackedInt32Array()
-	for chunk in chunks:
-		if chunk.active:
-			for x in [-1, 0, 1]:
-				for y in [-1, 0, 1]:
-					for z in [-1, 0, 1]:
-						var pos = chunk.position + Vector3i(x, y, z)
-						var idx := chunks.find_custom(
-							func (c: RDFluidChunk):
-								return c.position == pos)
-						if idx<0:
-							var data := PackedFloat32Array()
-							data.resize(16*16*16*16*10)
-							data.fill(0.0)
-							var bytes := data.to_byte_array()
-							var buffer := rd.storage_buffer_create(bytes.size(),
-								bytes)
-							var rd_chunk := RDFluidChunk.new()
-							rd_chunk.data = buffer
-							rd_chunk.position = pos
-							rd_chunk.active = false
-							idx = chunks.size()
-							chunks.append(rd_chunk)
-						neighbours.append(idx)
-	var neighbours_bytes := neighbours.to_byte_array()
-	neighbours_buffer = rd.storage_buffer_create(neighbours_bytes.size(),
-		neighbours_bytes)
-
-func reset_chunks(next_chunks: Array[FluidChunkSave]) -> void:
-	data_mutex.lock()
-	compute_width = next_chunks.size()
-	for chunk in chunks:
-		rd.free_rid(chunk.data)
-	chunks = []
-	for chunk in next_chunks:
-		var bytes := chunk.data.to_byte_array()
-		var buffer := rd.storage_buffer_create(bytes.size(), bytes)
-		var rd_chunk := RDFluidChunk.new()
-		rd_chunk.data = buffer
-		rd_chunk.position = chunk.position
-		rd_chunk.active = true
-		chunks.append(rd_chunk)
-	next_chunks = []
-	recalculate_neighbours()
-	data_mutex.unlock()
-
-func _physics_process(delta: float) -> void:
-	data_mutex.lock()
-	
-	if compute_width==0:
-		data_mutex.unlock()
+func process(delta: float) -> void:
+	push_warning("haha")
+	if (current_computation_width == 0):
 		return
-	
-	pipeline = rd.compute_pipeline_create(shader)# TODO fix the blockage here
-	var compute_list := rd.compute_list_begin()
-	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
-	
-	var neighbours_uniform := RDUniform.new()
-	neighbours_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	neighbours_uniform.binding = 0
-	neighbours_uniform.add_id(neighbours_buffer)
-	
-	var data_uniform := RDUniform.new()
-	data_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	data_uniform.binding = 1
-	for chunk in chunks:
-		data_uniform.add_id(chunk.data)
-	
+	var neighbourhood_uniform := RDUniform.new()
+	neighbourhood_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	neighbourhood_uniform.binding = 0
+	neighbourhood_uniform.add_id(neighbourhood)
+	var chunk_data_uniform := RDUniform.new()
+	chunk_data_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	chunk_data_uniform.binding = 1
+	chunk_data_uniform.add_id(chunk_data)
 	var activity_uniform := RDUniform.new()
 	activity_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	data_uniform.binding = 2
-	var activity_arr := PackedInt32Array()
-	activity_arr.resize(chunks.size())
-	activity_arr.fill(true)
-	var activity_data := activity_arr.to_byte_array()
-	var activity_buffer := rd.storage_buffer_create(activity_data.size(), activity_data)
-	data_uniform.add_id(activity_buffer)
-	breakpoint
-	var input_set := rd.uniform_set_create(
-		[neighbours_uniform, data_uniform, activity_uniform],
-		shader, 0)
-	rd.compute_list_bind_uniform_set(compute_list, input_set, 0)
+	activity_uniform.binding = 2
+	activity_uniform.add_id(activity_buffer)
+	var data_set := rd.uniform_set_create(
+		[neighbourhood_uniform, chunk_data_uniform, activity_uniform],
+		shader,
+		0)
 	
-	
+	var time_buffer := create_float_buffer(delta, 1)
 	var time_uniform := RDUniform.new()
 	time_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	time_uniform.binding = 0
-	var time_data := PackedFloat32Array([delta]).to_byte_array()
-	var time_buffer := rd.storage_buffer_create(time_data.size(), time_data)
 	time_uniform.add_id(time_buffer)
-	
 	var mass_curve_uniform := RDUniform.new()
 	mass_curve_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	mass_curve_uniform.binding = 1
 	mass_curve_uniform.add_id(mass_curve_buffer)
-	
 	var mass_direction_uniform := RDUniform.new()
 	mass_direction_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	mass_direction_uniform.binding = 2
 	mass_direction_uniform.add_id(mass_direction_buffer)
-	
 	var gravity_uniform := RDUniform.new()
 	gravity_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	gravity_uniform.binding = 3
 	gravity_uniform.add_id(gravity_buffer)
-	
 	var pressure_multiplier_uniform := RDUniform.new()
 	pressure_multiplier_uniform.uniform_type = \
 		RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	pressure_multiplier_uniform.binding = 4
 	pressure_multiplier_uniform.add_id(pressure_multiplier_buffer)
-	
 	var default_voxel_uniform := RDUniform.new()
 	default_voxel_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	default_voxel_uniform.binding = 5
 	default_voxel_uniform.add_id(default_voxel_buffer)
-	
-	var param_set := rd.uniform_set_create(
-		[time_uniform, mass_curve_uniform,mass_direction_uniform,
+	var config_set := rd.uniform_set_create(
+		[time_uniform, mass_curve_uniform, mass_direction_uniform,
 		gravity_uniform, pressure_multiplier_uniform, default_voxel_uniform],
-		shader, 1)
-	rd.compute_list_bind_uniform_set(compute_list, param_set, 1)
-	
+		shader,
+		1)
 	
 	var fullness_uniform := RDUniform.new()
 	fullness_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	fullness_uniform.binding = 0
-	var fullness_start_arr := PackedInt32Array()
-	fullness_start_arr.resize(compute_width)
-	fullness_start_arr.fill(0)
-	var fullness_start_data := fullness_start_arr.to_byte_array()
-	var fullness_buffer := rd.storage_buffer_create(
-		fullness_start_data.size(), fullness_start_data)
-	fullness_uniform.add_id(fullness_buffer)
+	fullness_uniform.add_id(fullness)
+	var tool_set := rd.uniform_set_create(
+		[fullness_uniform],
+		shader, 
+		2)
 	
-	var output_set := rd.uniform_set_create([fullness_uniform], shader, 2)
-	rd.compute_list_bind_uniform_set(compute_list, output_set, 2)
-	
-	rd.compute_list_dispatch(compute_list, compute_width, 1, 1)
+	push_warning("aiai")
 	rd.compute_list_end()
-	
+	print("uiui")
+	var pipeline := rd.compute_pipeline_create(shader)
+	print(pipeline.get_id())
+	var compute_list := rd.compute_list_begin()
+	print(compute_list)
+	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
+	rd.compute_list_bind_uniform_set(compute_list, data_set, 0)
+	rd.compute_list_bind_uniform_set(compute_list, config_set, 1)
+	rd.compute_list_bind_uniform_set(compute_list, tool_set, 2)
+	rd.compute_list_dispatch(compute_list, current_computation_width, 1, 1)
+	rd.compute_list_end()
 	rd.submit()
 	rd.sync()
 	
-	var activity := rd.buffer_get_data(activity_buffer).to_int32_array()
-	var change := false
-	for i in range(chunks.size()):
-		if chunks[i].active != (activity[i]!=0):
-			change = true
-			chunks[i].active = activity[i]!=0
-	if change:
-		recalculate_neighbours()
+	var buffer_data := rd.buffer_get_data(chunk_data).to_float32_array()
+	print(buffer_data)
+	material.set_shader_parameter("data", buffer_data)
 	
-	for volume in get_children():
-		volume.queue_free()
+	rd.free_rid(time_buffer)
 	
-	for chunk in chunks:
-		if chunk.active:
-			var volume := FogVolume.new()
-			volume.size = Vector3(chunk_size, chunk_size, chunk_size)
-			volume.material = ShaderMaterial.new()
-			volume.material.shader = load("res://fluid/display.tres")
-			volume.position = Vector3(chunk.position)
-			add_child(volume)
-	
-	data_mutex.unlock()
+	rd.free_rid(tool_set)
+	rd.free_rid(data_set)
+
+func _process(delta: float) -> void:
+	process(delta)
