@@ -4,6 +4,8 @@ class_name FluidVolume
 const chunk_size := 8
 const fraction_size := 16
 
+var prev_frame := PackedFloat32Array()
+
 func create_shader_or_error(spirv: RDShaderSPIRV) -> RID:
 	var err := spirv.compile_error_compute
 	if err:
@@ -28,10 +30,10 @@ func floats_to_buffer(packed: PackedFloat32Array) -> RID:
 
 @export var dimensions := Vector3i(4, 2, 1)
 @export var voxel_size := 0.02
-@export var mass_curve := PackedFloat32Array([0.0])
+@export var mass_curve := PackedFloat32Array([100.0])
 @export var mass_direction := PackedFloat32Array([0.1, 0.2, 0.3])
-@export var gravity := PackedFloat32Array([0.1, 0.2, 0.3])
-@export var pressure_multiplier := PackedFloat32Array([1.0])
+@export var gravity := PackedFloat32Array([0, -1000, 0])
+@export var pressure_multiplier := PackedFloat32Array([100.0])
 
 @onready var mass_curve_buffer := floats_to_buffer(mass_curve)
 @onready var mass_direction_buffer := floats_to_buffer(mass_direction)
@@ -154,14 +156,19 @@ func process(delta: float) -> void:
 	rd.submit()
 	rd.sync()
 	
-	rd.buffer_get_data_async(chunk_data, func(data):
-		material.set_shader_parameter("data", data.to_float32_array())
-		)
+	rd.buffer_get_data_async(chunk_data, set_shader_parameter)
 	
 	rd.free_rid(time_buffer)
 	
 	rd.free_rid(tool_set)
 	rd.free_rid(data_set)
+
+func set_shader_parameter(data):
+		prev_frame = data.to_float32_array()
+		for i in range(10):
+			print(prev_frame[i])
+		material.set_shader_parameter("data", prev_frame)
+		#breakpoint
 
 func _process(delta: float) -> void:
 	process.call_deferred(delta)

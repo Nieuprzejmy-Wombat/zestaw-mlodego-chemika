@@ -181,14 +181,13 @@ void main() {
 						currentVoxel[j][8]+=previousVoxel[i][8];
 						
 						currentVoxel[j][9]+=previousVoxel[i][9];
-						
-						currentVoxel[j][3]/=currentVoxel[j][9];
-						currentVoxel[j][4]/=currentVoxel[j][9];
-						currentVoxel[j][5]/=currentVoxel[j][9];
-						currentVoxel[j][6]/=currentVoxel[j][9];
-						currentVoxel[j][7]/=currentVoxel[j][9];
-						currentVoxel[j][8]/=currentVoxel[j][9];
-						
+						for (int k = 3; k < 9; k++) {
+							if (currentVoxel[j][k] != 0 && currentVoxel[j][9] != 0) {
+								currentVoxel[j][k]/=currentVoxel[j][9];
+							} else {
+								currentVoxel[j][k] = 100;
+							}
+						}
 						simmilar = true;
 					}
 				}
@@ -241,14 +240,12 @@ void main() {
 						copy[6] = currentVoxel[i][6];
 						copy[7] = currentVoxel[i][7];
 						copy[8] = currentVoxel[i][8];
-						copy[9] = currentVoxel[i][9]; // WHY DOESNT THIS LINE WORK!!!
-						//for (uint  a = 0; a < 10; a++) {
-							chunkDataBuffer.data[currentChunk]
+						// copy[9] = currentVoxel[i][9]; // WHY DOESNT THIS LINE WORK!!!
+						chunkDataBuffer.data[currentChunk]
 							[(int(gl_LocalInvocationID.x+uint(floor(currentVoxel[i][3]+1.0)))-1) % chunk_size]
 							[(int(gl_LocalInvocationID.y+uint(floor(currentVoxel[i][4]+1.0)))-1) % chunk_size]
 							[(int(gl_LocalInvocationID.z+uint(floor(currentVoxel[i][5]+1.0)))-1) % chunk_size]
 							[fullness] = copy;
-						//}
 						fullness+=1;
 						swapFullness(chunkNeighbours, uint(floor(currentVoxel[i][3]+1.0)), uint(floor(currentVoxel[i][4]+1.0)), uint(floor(currentVoxel[i][5]+1.0)), fullness);
 						completeness = bitfieldInsert(completeness, uint(0), int(i), 1);
