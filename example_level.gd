@@ -14,18 +14,43 @@ func _ready() -> void:
 	reload_settings()
 	var data := PackedFloat32Array()
 	data.resize(10*16*8*8*8*4*2*1)
-	data.fill(1)
-	for i in range(0, len(data), 10):
+	data.fill(0)
+	for i in [0]:
 		# color
 		data[i] = 1
 		data[i+1] = 1
 		data[i+2] = 255
 		
+		# position
+		data[i+3] = randf()-0.5
+		data[i+4] = randf()-0.5
+		data[i+5] = randf()-0.5
+		
 		#velocity
-		data[i+6] = 100
-		data[i+7] = -1
-		data[i+8] = 100
+		data[i+6] = 0
+		data[i+7] = -0.5
+		data[i+8] = 0
 		
 		# density
-		data[i+9] = randf() * 100 + 1
+		data[i+9] = 1
+	for i in range(10, len(data), 10):
+		# color
+		data[i] = 1
+		data[i+1] = 1
+		data[i+2] = 255
+		
+		# position
+		data[i+3] = randf()-0.5
+		data[i+4] = randf()-0.5
+		data[i+5] = randf()-0.5
+		
+		#velocity
+		data[i+6] = 0
+		data[i+7] = -0.5
+		data[i+8] = 0
+		
+		# density
+		data[i+9] = 1 if randf()<0.1 else 0
+	for i in 10:
+		print(data[i])
 	$FluidVolume.reset.call_deferred(data)

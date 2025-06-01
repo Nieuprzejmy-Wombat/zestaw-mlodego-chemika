@@ -19,11 +19,6 @@ run/main_scene="res://main_menu.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
-[debug]
-
-settings/stdout/print_gpu_profile=true
-settings/stdout/verbose_stdout=true
-
 [display]
 
 window/size/mode=3
@@ -75,6 +70,10 @@ place={
 "events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":2,"position":Vector2(300, 23),"global_position":Vector2(309, 69),"factor":1.0,"button_index":2,"canceled":false,"pressed":true,"double_click":false,"script":null)
 ]
 }
+
+[input_devices]
+
+compatibility/legacy_just_pressed_behavior=true
 
 [internationalization]
 

@@ -28,12 +28,13 @@ func floats_to_buffer(packed: PackedFloat32Array) -> RID:
 	var bytes := packed.to_byte_array()
 	return rd.storage_buffer_create(bytes.size(), bytes)
 
+@export var move_try_length := 128
+@export var move_attempts := 4
 @export var dimensions := Vector3i(4, 2, 1)
-@export var voxel_size := 0.02
-@export var mass_curve := PackedFloat32Array([100.0])
-@export var mass_direction := PackedFloat32Array([0.1, 0.2, 0.3])
-@export var gravity := PackedFloat32Array([0, -1000, 0])
-@export var pressure_multiplier := PackedFloat32Array([100.0])
+@export var mass_curve := PackedFloat32Array([0.5])
+@export var mass_direction := PackedFloat32Array([0.3, 0.3, 0.3])
+@export var gravity := PackedFloat32Array([0, -0.5, 0])
+@export var pressure_multiplier := PackedFloat32Array([0.5])
 
 @onready var mass_curve_buffer := floats_to_buffer(mass_curve)
 @onready var mass_direction_buffer := floats_to_buffer(mass_direction)
@@ -83,7 +84,7 @@ func reset(data: PackedFloat32Array) -> void:
 		*chunk_size*chunk_size*chunk_size
 		*4)
 
-func process(delta: float) -> void:
+func run(delta: float, op_mode: int) -> void:
 	if (current_computation_width == 0):
 		return
 	var neighbourhood_uniform := RDUniform.new()
@@ -144,7 +145,10 @@ func process(delta: float) -> void:
 		shader,
 		2)
 	
-	var pipeline := rd.compute_pipeline_create(shader)
+	var op_mode_specialization := RDPipelineSpecializationConstant.new()
+	op_mode_specialization.value = op_mode
+	
+	var pipeline := rd.compute_pipeline_create(shader, [op_mode_specialization])
 	
 	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -156,8 +160,6 @@ func process(delta: float) -> void:
 	rd.submit()
 	rd.sync()
 	
-	rd.buffer_get_data_async(chunk_data, set_shader_parameter)
-	
 	rd.free_rid(time_buffer)
 	
 	rd.free_rid(tool_set)
@@ -165,10 +167,17 @@ func process(delta: float) -> void:
 
 func set_shader_parameter(data):
 		prev_frame = data.to_float32_array()
-		for i in range(10):
-			print(prev_frame[i])
 		material.set_shader_parameter("data", prev_frame)
-		#breakpoint
 
 func _process(delta: float) -> void:
-	process.call_deferred(delta)
+	var data := rd.buffer_get_data(chunk_data).to_float32_array()
+	print("\narr:")
+	for i in 10:
+		print(data[i])
+	
+	run(delta, -2)
+	for i in move_attempts:
+		run(delta, move_try_length)
+	run(delta, -1)
+	
+	rd.buffer_get_data_async(chunk_data, set_shader_parameter)
