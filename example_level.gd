@@ -28,7 +28,7 @@ func _ready() -> void:
 		
 		#velocity
 		data[i+6] = 0
-		data[i+7] = -0.5
+		data[i+7] = 0
 		data[i+8] = 0
 		
 		# density
