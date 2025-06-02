@@ -54,7 +54,7 @@ layout(set = 2, binding = 0, std430) restrict buffer FullnessBuffer {
 
 
 uint chunkOffset(uint pos) {
-	return uint(floor((chunk_size+int(pos)-1)/chunk_size)+1);
+	return uint(floor((chunk_size+int(pos)-1)/chunk_size));
 }
 
 float[fraction_size][10] getVoxel(uint chunkNeighbours[3][3][3], uint x, uint y, uint z){
@@ -170,12 +170,21 @@ uint swapFullness(uint chunkNeighbours[3][3][3], uint x, uint y, uint z, uint da
 
 layout (constant_id = 0) const int op_mode = 0;
 
+bool isSolid(uint chunkNeighbours[3][3][3]){
+	// TODO make it more robust
+	float curr[fraction_size][10] = getVoxel(chunkNeighbours, 1, 1, 1);
+	return (curr[0][0]==0) && (curr[0][1]==0) && (curr[0][2]==0);
+}
+
 void main() {
 	uint chunkNeighbours[3][3][3] = chunkNeighbourBuffer.data[
 		gl_WorkGroupID.x*gl_NumWorkGroups.y*gl_NumWorkGroups.z +
 		gl_WorkGroupID.y*gl_NumWorkGroups.z +
 		gl_WorkGroupID.z];
 	
+	if (isSolid(chunkNeighbours)) {
+		return;
+	};
 	
 	if (op_mode==0 || op_mode==-2){
 		recalculateVelocities(chunkNeighbours);

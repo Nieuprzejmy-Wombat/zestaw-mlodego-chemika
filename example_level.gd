@@ -17,9 +17,9 @@ func _ready() -> void:
 	data.fill(0)
 	for i in [0]:
 		# color
-		data[i] = 1
-		data[i+1] = 1
-		data[i+2] = 255
+		data[i] = 256
+		data[i+1] = 0
+		data[i+2] = 0
 		
 		# position
 		data[i+3] = randf()-0.5
@@ -35,9 +35,9 @@ func _ready() -> void:
 		data[i+9] = 1
 	for i in range(10, len(data), 10):
 		# color
-		data[i] = 1
-		data[i+1] = 1
-		data[i+2] = 255
+		data[i] = 0
+		data[i+1] = 0
+		data[i+2] = 256
 		
 		# position
 		data[i+3] = randf()-0.5

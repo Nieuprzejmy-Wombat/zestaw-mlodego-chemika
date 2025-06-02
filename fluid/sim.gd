@@ -28,25 +28,37 @@ func floats_to_buffer(packed: PackedFloat32Array) -> RID:
 	var bytes := packed.to_byte_array()
 	return rd.storage_buffer_create(bytes.size(), bytes)
 
+func arr_mult_float(arr : Array[float], times: int):
+	var result := []
+	for i in times:
+		result.append_array(arr)
+	return result
+
 @export var move_try_length := 4
 @export var move_attempts := 2
 @export var dimensions := Vector3i(4, 2, 1)
 @export var mass_curve := PackedFloat32Array([0.5])
 @export var mass_direction := PackedFloat32Array([0.3, 0.3, 0.3])
 @export var gravity := PackedFloat32Array([0, -0.5, 0])
-@export var pressure_multiplier := PackedFloat32Array([10])
+@export var pressure_multiplier := PackedFloat32Array([-10])
+@export var default_voxel := PackedFloat32Array(arr_mult_float(
+	[0,0,0, 0.5,0.5,0.5, 0,0,0, 1000]
+	, fraction_size))
 
 @onready var mass_curve_buffer := floats_to_buffer(mass_curve)
 @onready var mass_direction_buffer := floats_to_buffer(mass_direction)
 @onready var gravity_buffer := floats_to_buffer(gravity)
 @onready var pressure_multiplier_buffer := floats_to_buffer(pressure_multiplier)
-@onready var default_voxel_buffer := create_float_buffer(0.0, fraction_size*10)
+@onready var default_voxel_buffer := floats_to_buffer(default_voxel)
 
 var neighbourhood: RID
 var chunk_data: RID
 var activity_buffer: RID
 var current_computation_width := 0
 var fullness: RID
+
+func range_or_other(v, from, to, other):
+	return v if from<=v and v<to else other
 
 # use .call_deferred so that it doesn't conflict with _process
 func reset(data: PackedFloat32Array) -> void:
@@ -57,6 +69,8 @@ func reset(data: PackedFloat32Array) -> void:
 	if chunk_data.is_valid():
 		rd.free_rid(chunk_data)
 	current_computation_width = dimensions.x*dimensions.y*dimensions.z
+	for i in chunk_size*chunk_size*chunk_size:
+		data.append_array(default_voxel)
 	var bytes := data.to_byte_array()
 	chunk_data = rd.storage_buffer_create(bytes.size(), bytes)
 	var raw_activity := PackedByteArray([0])
@@ -71,10 +85,13 @@ func reset(data: PackedFloat32Array) -> void:
 				for dx in 3:
 					for dy in 3:
 						for dz in 3:
+							var default_chunk := dimensions.x*dimensions.y*dimensions.z
 							neighbourhood_data.append(
-								wrapi(x+dx-1, 0, dimensions.x)*dimensions.y*dimensions.z
-								+wrapi(y+dy-1, 0, dimensions.y)*dimensions.z
-								+wrapi(z+dz-1, 0, dimensions.z))
+								range_or_other(x+dx-1, 0, dimensions.x, default_chunk)
+									*dimensions.y*dimensions.z+
+								range_or_other(y+dy-1, 0, dimensions.y, default_chunk)
+									*dimensions.z+
+								range_or_other(z+dz-1, 0, dimensions.z, default_chunk))
 	var neighbourhood_bytes := neighbourhood_data.to_byte_array()
 	neighbourhood = rd.storage_buffer_create(
 		neighbourhood_bytes.size(),
@@ -168,13 +185,11 @@ func run(delta: float, op_mode: int) -> void:
 func set_shader_parameter(data):
 		prev_frame = data.to_float32_array()
 		material.set_shader_parameter("data", prev_frame)
+		print("\nARR:")
+		for i in 10:
+			print(material.get_shader_parameter("data")[i])
 
 func _process(delta: float) -> void:
-	var data := rd.buffer_get_data(chunk_data).to_float32_array()
-	print("\narr:")
-	for i in 10:
-		print(data[i])
-	
 	run(delta, 0)
 	for i in move_attempts:
 		run(delta, move_try_length)

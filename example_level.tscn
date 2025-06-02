@@ -150,6 +150,7 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.17465, 0.950863, -0.033576)
 
 [node name="FluidVolume" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.20904, 0)
 size = Vector3(16, 8, 4)
 material = SubResource("ShaderMaterial_qitpc")
 script = ExtResource("10_qitpc")
