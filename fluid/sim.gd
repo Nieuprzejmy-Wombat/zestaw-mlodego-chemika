@@ -28,13 +28,13 @@ func floats_to_buffer(packed: PackedFloat32Array) -> RID:
 	var bytes := packed.to_byte_array()
 	return rd.storage_buffer_create(bytes.size(), bytes)
 
-@export var move_try_length := 128
-@export var move_attempts := 4
+@export var move_try_length := 4
+@export var move_attempts := 2
 @export var dimensions := Vector3i(4, 2, 1)
 @export var mass_curve := PackedFloat32Array([0.5])
 @export var mass_direction := PackedFloat32Array([0.3, 0.3, 0.3])
 @export var gravity := PackedFloat32Array([0, -0.5, 0])
-@export var pressure_multiplier := PackedFloat32Array([0.5])
+@export var pressure_multiplier := PackedFloat32Array([10])
 
 @onready var mass_curve_buffer := floats_to_buffer(mass_curve)
 @onready var mass_direction_buffer := floats_to_buffer(mass_direction)
@@ -175,7 +175,7 @@ func _process(delta: float) -> void:
 	for i in 10:
 		print(data[i])
 	
-	run(delta, -2)
+	run(delta, 0)
 	for i in move_attempts:
 		run(delta, move_try_length)
 	run(delta, -1)

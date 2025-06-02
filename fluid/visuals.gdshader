@@ -24,6 +24,9 @@ void fog() {
 			current(uvw, i*10+2),
 			current(uvw, i*10+9));
 	}
+	float a = 3.0;
+	float b = 1000.0;
+	float c = 7.0;
 	ALBEDO = color_acc.rgb/256.0;
-	DENSITY = color_acc.a * 0.01;
+	DENSITY = c-pow((color_acc.a+a)/b, -1.0/3.0);
 }
